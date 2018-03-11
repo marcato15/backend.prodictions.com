@@ -1,0 +1,18 @@
+package prodictions
+
+import (
+	"net/http"
+
+	"github.com/labstack/echo"
+)
+
+func init() {
+	Server.GET("/tables", listTables)
+}
+
+func listTables(c echo.Context) error {
+	//tables := DbConfig.ListTables()
+	tableName := "prodictions.Outcomes"
+	table := DB.DescribeTable(tableName)
+	return c.JSON(http.StatusOK, table)
+}

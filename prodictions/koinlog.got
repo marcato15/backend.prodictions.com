@@ -1,0 +1,56 @@
+package prodictions
+
+import (
+	"net/http"
+
+	"github.com/labstack/echo"
+	uuid "github.com/satori/go.uuid"
+)
+
+var (
+	koinlogTable = "Koinlog"
+)
+
+// Koinlog A struct storing all the transactions that take place inside the system
+type Koinlog struct {
+	ID     string `json:"id"`
+	User   *User  `json:"user,omitempty" dynamodbav:"-"`
+	UserID string `json:"userId,omitempty"`
+	Type   string `json:"type,omitempty"`
+	Source string `json:"source,omitempty"`
+}
+
+func init() {
+	Server.GET("/koinlog", listKoinlogs)
+	Server.PUT("/koinlog", putKoinlog)
+	Server.GET("/koinlog/:id", getKoinlog)
+}
+
+func getKoinlog(c echo.Context) error {
+	id := c.Param("id")
+	koinlog := Koinlog{}
+	DB.GetItemByIDFromTable(id, koinlogTable, &koinlog)
+	DB.GetItemByIDFromTable(koinlog.UserID, userTable, &koinlog.User)
+	return c.JSON(http.StatusOK, koinlog)
+}
+
+func putKoinlog(c echo.Context) error {
+	koinlog := new(Koinlog)
+	//See if we can bind the input to an koinlog
+	if err := c.Bind(koinlog); err != nil {
+		return c.String(http.StatusBadRequest, "Invalid Object")
+	}
+	if koinlog.ID == "" {
+		koinlog.ID = uuid.NewV4().String()
+	}
+	_, err := DB.PutItemInTable(koinlog, koinlogTable)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+	return c.JSON(http.StatusOK, koinlog)
+}
+func listKoinlogs(c echo.Context) error {
+	koinlogs := []Koinlog{}
+	DB.ListItems(koinlogTable, &koinlogs)
+	return c.JSON(http.StatusOK, koinlogs)
+}

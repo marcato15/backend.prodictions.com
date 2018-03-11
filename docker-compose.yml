@@ -1,0 +1,16 @@
+version: "3"
+networks:
+  default:
+    external:
+      name: dockerbox
+services:
+  go:
+    build: . 
+    ports:
+      - 1323
+    environment:
+      - VIRTUAL_HOST=api.prodictions.dev
+    restart: unless-stopped
+    working_dir: /go/src/github.com/marcato15/api.prodictions.com
+    volumes:
+      - ~/go/src:/go/src/
